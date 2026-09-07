@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrintB | Ventas y clientes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">P</span><span>PrintB</span></div>
+    <p class="eyebrow">ADMINISTRACIÓN</p>
+    <nav>
+      <button class="nav-item active" data-view="dashboard"><span>⌂</span> Resumen</button>
+      <button class="nav-item" data-view="sales"><span>▣</span> Ventas</button>
+      <button class="nav-item" data-view="clients"><span>♙</span> Clientes</button>
+      <button class="nav-item" data-view="payments"><span>↙</span> Abonos</button>
+    </nav>
+    <div class="printer-note"><span class="status-dot"></span><div><strong>Epson L220</strong><small>Lista para imprimir</small></div></div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar"><div><p class="eyebrow" id="section-label">HOY, 6 DE SEPTIEMBRE</p><h1 id="page-title">Resumen de tu negocio</h1></div><button class="primary-button" id="new-sale-top">＋ Nueva venta</button></header>
+
+    <section class="view active" id="dashboard-view">
+      <div class="metric-grid">
+        <article class="metric-card revenue"><div class="metric-icon">↗</div><span>Ventas del mes</span><strong id="metric-sales">$0.00</strong><small id="metric-sales-count">0 ventas registradas</small></article>
+        <article class="metric-card profit"><div class="metric-icon">✦</div><span>Ganancia estimada</span><strong id="metric-profit">$0.00</strong><small>Ventas menos costos</small></article>
+        <article class="metric-card debt"><div class="metric-icon">◌</div><span>Por cobrar</span><strong id="metric-debt">$0.00</strong><small id="metric-debt-count">0 clientes con saldo</small></article>
+        <article class="metric-card clients"><div class="metric-icon">♙</div><span>Clientes</span><strong id="metric-clients">0</strong><small>En tu cartera</small></article>
+      </div>
+      <div class="content-grid"><section class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow">MOVIMIENTO</p><h2>Ventas de los últimos 7 días</h2></div><span class="tag">Esta semana</span></div><div class="chart" id="sales-chart"></div></section><section class="panel"><div class="panel-heading"><div><p class="eyebrow">ATENCIÓN</p><h2>Saldos pendientes</h2></div><button class="text-button" data-view-target="clients">Ver todos</button></div><div id="debts-preview" class="compact-list"></div></section></div>
+      <section class="panel recent-panel"><div class="panel-heading"><div><p class="eyebrow">ACTIVIDAD RECIENTE</p><h2>Últimas ventas</h2></div><button class="text-button" data-view-target="sales">Ver historial</button></div><div id="recent-sales" class="table-wrap"></div></section>
+    </section>
+
+    <section class="view" id="sales-view"><div class="view-heading"><div><p class="eyebrow">REGISTRO</p><h2>Ventas</h2></div><button class="primary-button" id="new-sale">＋ Nueva venta</button></div><section class="panel"><div id="sales-table" class="table-wrap"></div></section></section>
+    <section class="view" id="clients-view"><div class="view-heading"><div><p class="eyebrow">CARTERA</p><h2>Clientes y saldos</h2></div><button class="primary-button" id="new-client">＋ Nuevo cliente</button></div><section class="panel"><div id="clients-table" class="table-wrap"></div></section></section>
+    <section class="view" id="payments-view"><div class="view-heading"><div><p class="eyebrow">COBRANZA</p><h2>Abonos recibidos</h2></div><button class="primary-button" id="new-payment">＋ Registrar abono</button></div><section class="panel"><div id="payments-table" class="table-wrap"></div></section></section>
+  </main>
+
+  <div class="modal-backdrop" id="modal-backdrop"><div class="modal" id="modal"></div></div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
