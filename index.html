@@ -34,7 +34,7 @@
       <button class="nav-item" data-view="clients"><span>♙</span> Clientes</button>
       <button class="nav-item" data-view="payments"><span>↙</span> Abonos</button>
     </nav>
-    <button class="printer-note" id="printer-panel"><span class="status-dot"></span><div><strong id="default-printer-name">Epson L220</strong><small id="default-printer-status">Lista para imprimir · Ver impresoras</small></div><span style="margin-left:auto;font-size:18px">›</span></button>
+    <div class="printer-note"><span class="status-dot"></span><div><strong>Epson L220</strong><small>Lista para imprimir</small></div></div>
   </aside>
 
   <main class="main-content">
@@ -61,6 +61,5 @@
   <div class="auth-backdrop" id="auth-backdrop" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;z-index:8"><form class="auth-card" id="auth-form"><section class="auth-visual"><div class="brand"><span class="brand-mark">P</span><span>PrintB</span></div><div class="auth-visual-copy"><h3>Tu negocio, siempre contigo.</h3><p>Ventas, clientes y abonos sincronizados para trabajar desde cualquier dispositivo.</p></div><div class="cloud-points"><span><i></i> Datos protegidos en la nube</span><span><i></i> Acceso desde computadora o celular</span></div></section><section class="auth-form-side"><p class="eyebrow">CUENTA PRINTB</p><h2 id="auth-title">Iniciar sesión</h2><p class="auth-copy">Usa la misma cuenta en todos tus dispositivos.</p><label>Correo electrónico<input required type="email" name="email" placeholder="tu-correo@ejemplo.com" autocomplete="email"></label><label>Contraseña<input required type="password" name="password" placeholder="Tu contraseña" autocomplete="current-password"></label><button class="primary-button" id="auth-submit">Entrar</button><button type="button" class="text-button" id="auth-toggle">Crear una cuenta</button><p class="auth-error" id="auth-error"></p></section></form></div>
   <script src="app.js"></script>
   <script src="firebase-sync.js"></script>
-  <script src="printers.js"></script>
 </body>
 </html>

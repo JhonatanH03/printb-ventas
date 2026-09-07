@@ -1,7 +1,6 @@
 const STORAGE_KEY = 'printb-data-v1';
 const seed = { sales: [], clients: [], payments: [] };
 let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || seed;
-data.printers = data.printers || [{ id: crypto.randomUUID(), name: 'Epson L220', status: 'Lista para imprimir', isDefault: true }];
 const money = value => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(Number(value) || 0);
 const saleOptions = [
   { name: 'Blanco y negro – texto', prices: [5, 4, 3] },
@@ -17,7 +16,6 @@ const priceForPages = (optionIndex, pages) => { const option = saleOptions[optio
 const save = () => { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); if (window.PRINTB_CLOUD_SAVE) window.PRINTB_CLOUD_SAVE(data); };
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[char]));
 const clientById = id => data.clients.find(client => client.id === id);
-const defaultPrinter = () => data.printers.find(printer => printer.isDefault) || data.printers[0];
 const clientDebt = id => data.sales.filter(sale => sale.clientId === id).reduce((sum, sale) => sum + sale.total - sale.paid, 0);
 const showToast = message => { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2400); };
 
