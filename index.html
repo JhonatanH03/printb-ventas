@@ -8,6 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .auth-backdrop{background:#102c27;overflow:auto}
+    .auth-card{display:grid;grid-template-columns:1fr 1.08fr;gap:0;max-width:880px!important;padding:0!important;overflow:hidden;border-radius:18px!important;background:#f8fbf8!important}
+    .auth-visual{padding:42px;background:#1c473d;color:#f1f7f2;min-height:500px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+    .auth-visual:after{content:'';position:absolute;width:260px;height:260px;border:1px solid #84b9a055;border-radius:50%;right:-100px;bottom:-70px;box-shadow:0 0 0 35px #84b9a022,0 0 0 70px #84b9a011}
+    .auth-visual .brand{margin:0;color:#fff;font-size:24px;position:relative;z-index:1}
+    .auth-visual-copy{position:relative;z-index:1}.auth-visual h3{font:600 35px/1.06 'Space Grotesk';max-width:290px;margin:0 0 16px;letter-spacing:-1px}.auth-visual p{color:#b7d0c5;line-height:1.55;max-width:270px;margin:0}
+    .cloud-points{position:relative;z-index:1;display:grid;gap:10px;color:#d7e9df;font-size:12px}.cloud-points span{display:flex;align-items:center;gap:9px}.cloud-points i{width:7px;height:7px;border-radius:50%;background:#ebc46e;display:inline-block}
+    .auth-form-side{padding:46px 48px}.auth-form-side .eyebrow{color:#17795f}.auth-card h2{font:600 30px 'Space Grotesk';letter-spacing:-.5px;margin:0 0 8px}.auth-copy{font-size:13px;color:#71817c;margin:0 0 24px}.auth-card input{width:100%;border:1px solid #d8e3de;border-radius:8px;padding:13px 14px;margin:7px 0 12px;background:#fff;font:inherit}.auth-card input:focus{outline:0;border-color:#17795f;box-shadow:0 0 0 3px #17795f18}.auth-card .primary-button{width:100%;margin-top:5px;padding:13px}.auth-card .text-button{display:block;margin:17px auto 0}.auth-error{color:#b55039;font-size:12px;min-height:16px;text-align:center;margin:14px 0 0}@media(max-width:650px){.auth-card{display:block;max-width:430px!important}.auth-visual{min-height:245px;padding:28px}.auth-visual h3{font-size:28px;margin-top:26px}.cloud-points{display:none}.auth-form-side{padding:30px 25px}}
+  </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -47,6 +57,8 @@
 
   <div class="modal-backdrop" id="modal-backdrop"><div class="modal" id="modal"></div></div>
   <div class="toast" id="toast"></div>
+  <div class="auth-backdrop" id="auth-backdrop" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;z-index:8"><form class="auth-card" id="auth-form"><section class="auth-visual"><div class="brand"><span class="brand-mark">P</span><span>PrintB</span></div><div class="auth-visual-copy"><h3>Tu negocio, siempre contigo.</h3><p>Ventas, clientes y abonos sincronizados para trabajar desde cualquier dispositivo.</p></div><div class="cloud-points"><span><i></i> Datos protegidos en la nube</span><span><i></i> Acceso desde computadora o celular</span></div></section><section class="auth-form-side"><p class="eyebrow">CUENTA PRINTB</p><h2 id="auth-title">Iniciar sesión</h2><p class="auth-copy">Usa la misma cuenta en todos tus dispositivos.</p><label>Correo electrónico<input required type="email" name="email" placeholder="tu-correo@ejemplo.com" autocomplete="email"></label><label>Contraseña<input required type="password" name="password" placeholder="Tu contraseña" autocomplete="current-password"></label><button class="primary-button" id="auth-submit">Entrar</button><button type="button" class="text-button" id="auth-toggle">Crear una cuenta</button><p class="auth-error" id="auth-error"></p></section></form></div>
   <script src="app.js"></script>
+  <script src="firebase-sync.js"></script>
 </body>
 </html>
