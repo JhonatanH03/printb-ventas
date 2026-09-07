@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -23,7 +27,7 @@
   </aside>
 
   <main class="main-content">
-    <header class="topbar"><div><p class="eyebrow" id="section-label">HOY, 6 DE SEPTIEMBRE</p><h1 id="page-title">Resumen de tu negocio</h1></div><button class="primary-button" id="new-sale-top">＋ Nueva venta</button></header>
+    <header class="topbar"><div><p class="eyebrow" id="section-label">HOY, 6 DE SEPTIEMBRE</p><h1 id="page-title">Resumen de tu negocio</h1></div><div class="topbar-actions"><button class="secondary-button" id="export-data">↓ Respaldar</button><button class="secondary-button" id="import-data">↑ Restaurar</button><input type="file" id="import-file" accept="application/json" hidden><button class="primary-button" id="new-sale-top">＋ Nueva venta</button></div></header>
 
     <section class="view active" id="dashboard-view">
       <div class="metric-grid">
