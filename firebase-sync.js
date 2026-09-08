@@ -6,18 +6,23 @@
   const authTitle = document.getElementById('auth-title');
   const authSubmit = document.getElementById('auth-submit');
   const authError = document.getElementById('auth-error');
+  const logoutButton = document.getElementById('logout');
   let creating = false;
 
-  if (!config?.apiKey || !window.firebase) { authBackdrop.style.display = 'none'; return; }
+  if (!config?.apiKey || !window.firebase) { authBackdrop.style.display = 'none'; logoutButton.style.display = 'none'; return; }
 
   const app = firebase.initializeApp(config);
   const auth = firebase.auth();
   const cloud = firebase.firestore();
+  logoutButton.onclick = () => auth.signOut();
 
   const accountRef = () => cloud.collection('accounts').doc(auth.currentUser.uid);
   const readCollection = async collectionName => {
-    const docs = await accountRef().collection(collectionName).orderBy('createdAt', 'desc').get();
-    return docs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const collection = accountRef().collection(collectionName);
+    const snapshot = collectionName === 'clients'
+      ? await collection.get()
+      : await collection.orderBy('createdAt', 'desc').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   };
 
   const saveRemoteData = async value => {
@@ -25,13 +30,6 @@
 
     const base = accountRef();
     const batch = firebase.firestore().batch();
-    const collections = ['sales', 'clients', 'payments'];
-
-    for (const collectionName of collections) {
-      const collectionRef = base.collection(collectionName);
-      const snap = await collectionRef.get();
-      snap.forEach(doc => batch.delete(doc.ref));
-    }
 
     (value.sales || []).forEach(sale => {
       batch.set(base.collection('sales').doc(sale.id), { ...sale });
@@ -49,9 +47,19 @@
     await base.set({ updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
   };
 
+  const mergeRecords = (remote, local) => [
+    ...remote,
+    ...local.filter(localRecord => !remote.some(remoteRecord => remoteRecord.id === localRecord.id))
+  ];
+
   window.PRINTB_CLOUD_SAVE = value => {
     if (auth.currentUser) return saveRemoteData(value);
     return Promise.resolve();
+  };
+
+  window.PRINTB_CLOUD_DELETE = async (collectionName, recordId) => {
+    if (!auth.currentUser) return;
+    await accountRef().collection(collectionName).doc(recordId).delete();
   };
 
   const setLoginMode = () => { creating = false; authTitle.textContent = 'Iniciar sesión'; authSubmit.textContent = 'Entrar'; authSubmit.style.display = ''; authToggle.textContent = 'Crear una cuenta'; authToggle.style.display = ''; authError.textContent = ''; };
@@ -113,9 +121,18 @@
       readCollection('payments')
     ]);
 
+    const remoteData = { sales, clients, payments };
+    const mergedData = {
+      sales: mergeRecords(sales, data.sales),
+      clients: mergeRecords(clients, data.clients),
+      payments: mergeRecords(payments, data.payments)
+    };
+    const hasLocalRecordsToUpload = Object.keys(mergedData).some(collectionName => mergedData[collectionName].length > remoteData[collectionName].length);
+
     if (sales.length || clients.length || payments.length || accountDoc.exists) {
-      data = { sales, clients, payments };
+      data = mergedData;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (hasLocalRecordsToUpload) await saveRemoteData(data);
       renderAll();
     } else if (data.sales.length || data.clients.length || data.payments.length) {
       await saveRemoteData(data);

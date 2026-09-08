@@ -38,7 +38,8 @@ const priceForPages = (optionIndex, pages) => {
 
 const save = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  if (window.PRINTB_CLOUD_SAVE) window.PRINTB_CLOUD_SAVE(data);
+  if (window.PRINTB_CLOUD_SAVE) return window.PRINTB_CLOUD_SAVE(data);
+  return Promise.resolve();
 };
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -111,7 +112,7 @@ function saleTable(sales, full) {
   return `<table class="data-table"><thead><tr><th>Cliente</th><th>Detalle</th><th>Fecha</th><th>Total</th><th>Estado</th>${full ? '<th></th>' : ''}</tr></thead><tbody>${sales.map(sale => {
     const status = saleStatus(sale);
     const client = clientById(sale.clientId);
-    return `<tr><td><strong>${esc(client?.name || 'Venta de mostrador')}</strong></td><td>${saleDetailMarkup(sale)}</td><td>${dateLabel(sale.date)}</td><td>${money(sale.total)}</td><td><span class="status ${status[1]}">${status[0]}</span></td>${full ? `<td><button class="text-button" data-edit-sale="${sale.id}">Editar</button> <button class="text-button" data-print="${sale.id}">Imprimir</button></td>` : ''}</tr>`;
+    return `<tr><td><strong>${esc(client?.name || 'Venta de mostrador')}</strong></td><td>${saleDetailMarkup(sale)}</td><td>${dateLabel(sale.date)}</td><td>${money(sale.total)}</td><td><span class="status ${status[1]}">${status[0]}</span></td>${full ? `<td><div class="row-actions"><button class="menu-trigger" data-sale-menu aria-expanded="false" title="Más opciones" aria-label="Más opciones">⋮</button><div class="action-menu" hidden><button class="menu-item" data-edit-sale="${sale.id}"><span aria-hidden="true">✎</span> Editar</button><button class="menu-item" data-print="${sale.id}"><span aria-hidden="true">▣</span> Imprimir</button><button class="menu-item danger" data-delete-sale="${sale.id}"><span aria-hidden="true">×</span> Eliminar</button></div></div></td>` : ''}</tr>`;
   }).join('')}</tbody></table>`;
 }
 
@@ -187,38 +188,61 @@ function renderAll() {
 }
 
 function saleForm() {
-  openModal(`<div class="modal-header"><div><p class="eyebrow">NUEVO REGISTRO</p><h2>Registrar venta</h2></div><button class="close" data-close>�</button></div><form id="sale-form"><div class="form-grid"><div class="field full"><label>Cliente</label><select name="clientId"><option value="">Venta de mostrador</option>${data.clients.map(client => `<option value="${client.id}">${esc(client.name)}</option>`).join('')}</select></div><div class="field full"><label>Servicio</label><select required name="service"><option value="">Selecciona el tipo de impresi�n</option>${saleOptions.map((option, index) => `<option value="${index}">${esc(option.name)}</option>`).join('')}</select></div><div class="field"><label>Cantidad de p�ginas</label><input required type="number" min="1" step="1" name="pages" placeholder="Ej. 25" /></div><div class="field"><label>Precio por p�gina</label><input readonly name="unitPrice" placeholder="Se calcula autom�ticamente" /></div><div class="field"><label>Total de venta</label><input required readonly type="number" min="0" step="0.01" name="total" placeholder="Selecciona servicio y p�ginas" /></div><div class="field"><label>Costo</label><input required type="number" min="0" step="0.01" name="cost" placeholder="0.00" /></div><div class="field"><label>Pag� hoy</label><input required type="number" min="0" step="0.01" name="paid" placeholder="0.00" /></div><div class="field"><label>Fecha</label><input required type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" /></div></div><div class="modal-actions"><button type="button" class="secondary-button" data-close>Cancelar</button><button class="primary-button">Guardar venta</button></div></form></div>`);
+  const serviceOptions = saleOptions.map((option, index) => `<option value="${index}">${esc(option.name)}</option>`).join('');
+  const itemRow = () => `<div class="sale-item-row" data-item-row><div class="field"><label>Servicio</label><select required name="service"> <option value="">Selecciona un servicio</option>${serviceOptions}</select></div><div class="field"><label>Páginas</label><input required type="number" min="1" step="1" name="pages" placeholder="Ej. 25" /></div><div class="field"><label>Precio por página</label><input readonly name="unitPrice" placeholder="Automático" /></div><button type="button" class="remove-sale-item" data-remove-item aria-label="Quitar servicio" title="Quitar servicio">×</button></div>`;
+  openModal(`<div class="modal-header"><div><p class="eyebrow">NUEVO REGISTRO</p><h2>Registrar venta</h2></div><button class="close" data-close>�</button></div><form id="sale-form"><div class="form-grid"><div class="field full"><label>Cliente</label><select name="clientId"><option value="">Venta de mostrador</option>${data.clients.map(client => `<option value="${client.id}">${esc(client.name)}</option>`).join('')}</select></div><div id="sale-items" class="field full">${itemRow()}</div><div class="field full"><button type="button" class="add-sale-item" id="add-sale-item"><span>＋</span> Agregar otro servicio</button></div><div class="field"><label>Total de venta</label><input required readonly type="number" min="0" step="0.01" name="total" placeholder="Se calcula automáticamente" /></div><div class="field"><label>Pagó hoy</label><input required type="number" min="0" step="0.01" name="paid" placeholder="0.00" /></div><div class="field"><label>Fecha</label><input required type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" /></div></div><div class="modal-actions"><button type="button" class="secondary-button" data-close>Cancelar</button><button class="primary-button">Guardar venta</button></div></form></div>`);
 
   const formElement = document.getElementById('sale-form');
   if (!formElement) return;
+  const itemsElement = document.getElementById('sale-items');
+  const totalElement = formElement.elements.total;
 
   const updateTotal = () => {
-    const optionIndex = Number(formElement.elements.service.value);
-    const pages = Number(formElement.elements.pages.value);
-    const unitPrice = optionIndex >= 0 && pages > 0 ? priceForPages(optionIndex, 1) : 0;
-    const total = optionIndex >= 0 && pages > 0 ? priceForPages(optionIndex, pages) : 0;
-    formElement.elements.unitPrice.value = optionIndex >= 0 && pages > 0 ? String(unitPrice) : '';
-    formElement.elements.total.value = optionIndex >= 0 && pages > 0 ? String(total) : '';
+    let total = 0;
+    itemsElement.querySelectorAll('[data-item-row]').forEach(row => {
+      const optionIndex = Number(row.querySelector('[name="service"]').value);
+      const pages = Number(row.querySelector('[name="pages"]').value);
+      const valid = optionIndex >= 0 && pages > 0;
+      row.querySelector('[name="unitPrice"]').value = valid ? String(priceForPages(optionIndex, 1)) : '';
+      total += valid ? priceForPages(optionIndex, pages) : 0;
+    });
+    totalElement.value = total || '';
   };
 
-  formElement.elements.service.addEventListener('change', updateTotal);
-  formElement.elements.pages.addEventListener('input', updateTotal);
+  itemsElement.addEventListener('change', updateTotal);
+  itemsElement.addEventListener('input', updateTotal);
+  document.getElementById('add-sale-item').onclick = () => {
+    itemsElement.insertAdjacentHTML('beforeend', itemRow());
+  };
+  itemsElement.addEventListener('click', event => {
+    if (event.target.closest('[data-remove-item]') && itemsElement.querySelectorAll('[data-item-row]').length > 1) {
+      event.target.closest('[data-item-row]').remove();
+      updateTotal();
+    }
+  });
 
   formElement.onsubmit = event => {
     event.preventDefault();
     const form = new FormData(event.target);
-    const optionIndex = Number(form.get('service'));
-    const pages = Number(form.get('pages'));
-    const total = Number(form.get('total'));
+    const items = [...itemsElement.querySelectorAll('[data-item-row]')].map(row => {
+      const optionIndex = Number(row.querySelector('[name="service"]').value);
+      const pages = Number(row.querySelector('[name="pages"]').value);
+      return { option: saleOptions[optionIndex], pages };
+    }).filter(item => item.option && item.pages > 0);
+    const total = items.reduce((sum, item) => sum + priceForPages(saleOptions.indexOf(item.option), item.pages), 0);
     const paid = Math.min(Number(form.get('paid')), total);
-    const option = saleOptions[optionIndex];
+
+    if (!items.length) {
+      showToast('Agrega al menos un servicio');
+      return;
+    }
 
     const saleEntry = {
       id: crypto.randomUUID(),
       clientId: form.get('clientId') || '',
-      description: option ? `${option.name} (${pages} p�ginas)` : 'Venta registrada',
-      items: option ? [{ option, pages }] : [],
-      total: total || 0,
+      description: items.map(item => `${item.pages} × ${item.option.name}`).join(', '),
+      items,
+      total,
       cost: Number(form.get('cost')) || 0,
       paid: paid || 0,
       date: form.get('date'),
@@ -244,7 +268,8 @@ function clientForm() {
       id: crypto.randomUUID(),
       name: form.get('name'),
       phone: form.get('phone'),
-      email: form.get('email')
+      email: form.get('email'),
+      createdAt: Date.now()
     });
     save();
     closeModal();
@@ -349,7 +374,51 @@ function printReceipt(id) {
   printWindow.document.close();
 }
 
+function deleteSale(saleId) {
+  const sale = data.sales.find(item => item.id === saleId);
+  if (!sale || !window.confirm('¿Eliminar esta venta? Esta acción no se puede deshacer.')) return;
+
+  data.sales = data.sales.filter(item => item.id !== saleId);
+  const savePromise = save();
+  if (window.PRINTB_CLOUD_DELETE) savePromise.then(() => window.PRINTB_CLOUD_DELETE('sales', saleId));
+  renderAll();
+  showToast('Venta eliminada');
+}
+
 document.addEventListener('click', event => {
+  const menuTrigger = event.target.closest('[data-sale-menu]');
+  if (menuTrigger) {
+    document.querySelectorAll('.action-menu').forEach(menu => {
+      if (menu !== menuTrigger.nextElementSibling) {
+        menu.hidden = true;
+        menu.classList.remove('floating-menu');
+      }
+    });
+    const menu = menuTrigger.nextElementSibling;
+    const opening = menu.hidden;
+    menu.hidden = !opening;
+    menuTrigger.setAttribute('aria-expanded', String(opening));
+    if (opening) {
+      menu.classList.add('floating-menu');
+      const triggerRect = menuTrigger.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
+      const top = triggerRect.bottom + 5 + menuRect.height <= window.innerHeight
+        ? triggerRect.bottom + 5
+        : triggerRect.top - menuRect.height - 5;
+      const left = Math.min(triggerRect.right - menuRect.width, window.innerWidth - menuRect.width - 8);
+      menu.style.top = `${Math.max(8, top)}px`;
+      menu.style.left = `${Math.max(8, left)}px`;
+    } else {
+      menu.classList.remove('floating-menu');
+    }
+    return;
+  }
+
+  if (!event.target.closest('.action-menu')) document.querySelectorAll('.action-menu').forEach(menu => {
+    menu.hidden = true;
+    menu.classList.remove('floating-menu');
+  });
+
   const nav = event.target.closest('[data-view]');
   if (nav) navigate(nav.dataset.view);
 
@@ -366,6 +435,9 @@ document.addEventListener('click', event => {
 
   const print = event.target.closest('[data-print]');
   if (print) printReceipt(print.dataset.print);
+
+  const deletion = event.target.closest('[data-delete-sale]');
+  if (deletion) deleteSale(deletion.dataset.deleteSale);
 
   const edit = event.target.closest('[data-edit-sale]');
   if (edit) editSaleForm(edit.dataset.editSale);
