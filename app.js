@@ -177,7 +177,11 @@ function renderPayments() {
   const paymentsTable = document.getElementById('payments-table');
   if (!paymentsTable) return;
   const payments = [...data.payments].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  paymentsTable.innerHTML = payments.length ? `<table class="data-table"><thead><tr><th>Cliente</th><th>Fecha</th><th>Monto</th><th>Nota</th></tr></thead><tbody>${payments.map(payment => `<tr><td><strong>${esc(clientById(payment.clientId)?.name || 'Cliente eliminado')}</strong></td><td>${dateLabel(payment.date)}</td><td>${money(payment.amount)}</td><td>${esc(payment.note || 'Sin nota')}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Todav�a no hay abonos registrados.</p>';
+  paymentsTable.innerHTML = payments.length ? `<table class="data-table"><thead><tr><th>Cliente</th><th>Fecha</th><th>Saldo anterior</th><th>Abono</th><th>Saldo restante</th><th>Nota</th></tr></thead><tbody>${payments.map(payment => {
+    const previousBalance = Number.isFinite(Number(payment.previousBalance)) ? Number(payment.previousBalance) : Number(payment.amount) || 0;
+    const remainingBalance = Number.isFinite(Number(payment.remainingBalance)) ? Number(payment.remainingBalance) : Math.max(previousBalance - (Number(payment.amount) || 0), 0);
+    return `<tr><td><strong>${esc(clientById(payment.clientId)?.name || 'Cliente eliminado')}</strong></td><td>${dateLabel(payment.date)}</td><td>${money(previousBalance)}</td><td><strong>${money(payment.amount)}</strong></td><td><span class="amount">${money(remainingBalance)}</span></td><td>${esc(payment.note || 'Sin nota')}</td></tr>`;
+  }).join('')}</tbody></table>` : '<p class="empty">Todav�a no hay abonos registrados.</p>';
 }
 
 function renderAll() {
@@ -280,15 +284,33 @@ function clientForm() {
 
 function paymentForm(clientId = '') {
   const options = data.clients.filter(client => clientDebt(client.id) > 0).map(client => `<option value="${client.id}" ${client.id === clientId ? 'selected' : ''}>${esc(client.name)} � ${money(clientDebt(client.id))}</option>`).join('');
-  openModal(`<div class="modal-header"><div><p class="eyebrow">COBRANZA</p><h2>Registrar abono</h2></div><button class="close" data-close>�</button></div><form id="payment-form"><div class="form-grid"><div class="field full"><label>Cliente</label><select required name="clientId"><option value="">Selecciona un cliente</option>${options}</select></div><div class="field"><label>Monto recibido</label><input required type="number" min="0.01" step="0.01" name="amount" placeholder="0.00" /></div><div class="field"><label>Fecha</label><input required type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" /></div><div class="field full"><label>Nota</label><input name="note" placeholder="Ej. Transferencia" /></div></div><div class="modal-actions"><button type="button" class="secondary-button" data-close>Cancelar</button><button class="primary-button">Guardar abono</button></div></form></div>`);
+  openModal(`<div class="modal-header"><div><p class="eyebrow">COBRANZA</p><h2>Registrar abono</h2></div><button class="close" data-close>�</button></div><form id="payment-form"><div class="form-grid"><div class="field full"><label>Cliente</label><select required name="clientId"><option value="">Selecciona un cliente</option>${options}</select></div><div class="balance-summary" id="payment-summary"><div><span>Saldo anterior</span><strong data-balance-before>${money(clientId ? clientDebt(clientId) : 0)}</strong></div><div><span>Abono</span><strong data-balance-payment>${money(0)}</strong></div><div><span>Saldo restante</span><strong data-balance-after>${money(clientId ? clientDebt(clientId) : 0)}</strong></div></div><div class="field"><label>Monto recibido</label><input required type="number" min="0.01" step="0.01" name="amount" placeholder="0.00" /></div><div class="field"><label>Fecha</label><input required type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" /></div><div class="field full"><label>Nota</label><input name="note" placeholder="Ej. Transferencia" /></div></div><div class="modal-actions"><button type="button" class="secondary-button" data-close>Cancelar</button><button class="primary-button">Guardar abono</button></div></form></div>`);
 
-  document.getElementById('payment-form').onsubmit = event => {
+  const formElement = document.getElementById('payment-form');
+  const updateSummary = () => {
+    const balanceBefore = clientById(formElement.elements.clientId.value) ? clientDebt(formElement.elements.clientId.value) : 0;
+    const amount = Math.max(Number(formElement.elements.amount.value) || 0, 0);
+    formElement.querySelector('[data-balance-before]').textContent = money(balanceBefore);
+    formElement.querySelector('[data-balance-payment]').textContent = money(amount);
+    formElement.querySelector('[data-balance-after]').textContent = money(Math.max(balanceBefore - amount, 0));
+  };
+  formElement.elements.clientId.addEventListener('change', updateSummary);
+  formElement.elements.amount.addEventListener('input', updateSummary);
+  updateSummary();
+
+  formElement.onsubmit = event => {
     event.preventDefault();
     const form = new FormData(event.target);
     const client = clientById(form.get('clientId'));
     const amount = Number(form.get('amount'));
+    const previousBalance = client ? clientDebt(client.id) : 0;
 
-    if (!client || amount > clientDebt(client.id) + 0.01) {
+    if (!client || amount <= 0) {
+      showToast('Indica un monto válido');
+      return;
+    }
+
+    if (amount > previousBalance + 0.01) {
       showToast('El abono supera el saldo pendiente');
       return;
     }
@@ -297,6 +319,8 @@ function paymentForm(clientId = '') {
       id: crypto.randomUUID(),
       clientId: client.id,
       amount,
+      previousBalance,
+      remainingBalance: Math.max(previousBalance - amount, 0),
       date: form.get('date'),
       note: form.get('note'),
       createdAt: Date.now()
