@@ -19,12 +19,12 @@ let data = loadData();
 
 const money = value => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(Number(value) || 0);
 const saleOptions = [
-  { name: 'Blanco y negro � texto', prices: [5, 4, 3] },
-  { name: 'B/N � con im�genes/gr�ficos', prices: [7, 6, 5] },
-  { name: 'Color � texto / poco color', prices: [10, 8, 7] },
-  { name: 'Color � gr�ficos / color medio', prices: [15, 12, 10] },
-  { name: 'Color � p�gina completa / mucha tinta', prices: [20, 18, 15] },
-  { name: 'Imagen/foto en papel normal', prices: [25, 20, 18] },
+  { name: 'Blanco y negro � texto', prices: [5, 5, 5] },
+  { name: 'B/N � con im�genes/gr�ficos', prices: [10, 10, 5] },
+  { name: 'Color � texto / poco color', prices: [10, 10, 5] },
+  { name: 'Color � gr�ficos / color medio', prices: [15, 10, 10] },
+  { name: 'Color � p�gina completa / mucha tinta', prices: [20, 20, 15] },
+  { name: 'Imagen/foto en papel normal', prices: [25, 20, 20] },
   { name: 'Copia de c�dula � B/N', prices: [10, 10, 10] },
   { name: 'Copia de c�dula � color', prices: [20, 20, 20] }
 ];
